@@ -1,12 +1,12 @@
 use std::convert::TryFrom;
 
-use rand::thread_rng;
+use rand::rng;
 
 use ed25519_consensus::{Signature, SigningKey, VerificationKey, VerificationKeyBytes};
 
 #[test]
 fn parsing() {
-    let sk = SigningKey::new(thread_rng());
+    let sk = SigningKey::new(rng());
     let pk = VerificationKey::from(&sk);
     let pkb = VerificationKeyBytes::from(&sk);
     let sig = sk.sign(b"test");
@@ -29,10 +29,24 @@ fn parsing() {
     assert_eq!(&pkb_array[..], pkb2.as_ref());
     assert_eq!(&sig_array[..], <[u8; 64]>::from(sig2).as_ref());
 
-    let sk3: SigningKey = bincode::deserialize(sk.as_ref()).unwrap();
-    let pk3: VerificationKey = bincode::deserialize(pk.as_ref()).unwrap();
-    let pkb3: VerificationKeyBytes = bincode::deserialize(pkb.as_ref()).unwrap();
-    let sig3: Signature = bincode::deserialize(<[u8; 64]>::from(sig).as_ref()).unwrap();
+    let sk3: SigningKey =
+        bincode::serde::decode_from_slice(sk.as_ref(), bincode::config::standard())
+            .unwrap()
+            .0;
+    let pk3: VerificationKey =
+        bincode::serde::decode_from_slice(pk.as_ref(), bincode::config::standard())
+            .unwrap()
+            .0;
+    let pkb3: VerificationKeyBytes =
+        bincode::serde::decode_from_slice(pkb.as_ref(), bincode::config::standard())
+            .unwrap()
+            .0;
+    let sig3: Signature = bincode::serde::decode_from_slice(
+        <[u8; 64]>::from(sig).as_ref(),
+        bincode::config::standard(),
+    )
+    .unwrap()
+    .0;
 
     assert_eq!(&sk_array[..], sk3.as_ref());
     assert_eq!(&pk_array[..], pk3.as_ref());
@@ -42,7 +56,7 @@ fn parsing() {
 
 #[test]
 fn sign_and_verify() {
-    let sk = SigningKey::new(thread_rng());
+    let sk = SigningKey::new(rng());
     let pk = VerificationKey::from(&sk);
 
     let msg = b"ed25519-consensus test message";

@@ -9,9 +9,16 @@ use ed25519_consensus::*;
 use hex;
 
 fn rfc8032_test_case(sk_bytes: Vec<u8>, pk_bytes: Vec<u8>, sig_bytes: Vec<u8>, msg: Vec<u8>) {
-    let sk: SigningKey = bincode::deserialize(&sk_bytes).expect("sk should deserialize");
-    let pk: VerificationKey = bincode::deserialize(&pk_bytes).expect("pk should deserialize");
-    let sig: Signature = bincode::deserialize(&sig_bytes).expect("sig should deserialize");
+    let sk: SigningKey = bincode::serde::decode_from_slice(&sk_bytes, bincode::config::standard())
+        .expect("sk should deserialize")
+        .0;
+    let pk: VerificationKey =
+        bincode::serde::decode_from_slice(&pk_bytes, bincode::config::standard())
+            .expect("pk should deserialize")
+            .0;
+    let sig: Signature = bincode::serde::decode_from_slice(&sig_bytes, bincode::config::standard())
+        .expect("sig should deserialize")
+        .0;
 
     assert!(pk.verify(&sig, &msg).is_ok(), "verification failed");
 

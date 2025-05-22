@@ -3,7 +3,7 @@ use curve25519_dalek::{
     constants::EIGHT_TORSION, edwards::CompressedEdwardsY, scalar::Scalar, traits::IsIdentity,
 };
 use once_cell::sync::Lazy;
-use sha2::{Digest, Sha512};
+use sha2::{digest::Update, Sha512};
 
 mod util;
 use util::TestCase;
@@ -11,7 +11,7 @@ use util::TestCase;
 #[allow(non_snake_case)]
 pub static SMALL_ORDER_SIGS: Lazy<Vec<TestCase>> = Lazy::new(|| {
     let mut tests = Vec::new();
-    let s = Scalar::zero();
+    let s = Scalar::ZERO;
 
     // Use all the canonical encodings of the 8-torsion points,
     // and the low-order non-canonical encodings.
@@ -97,7 +97,7 @@ fn individual_matches_batch_verification() -> Result<(), Report> {
             VerificationKey::try_from(vkb).and_then(|vk| vk.verify(&sig, msg));
         let mut bv = batch::Verifier::new();
         bv.queue((vkb, sig, msg));
-        let batch_verification = bv.verify(rand::thread_rng());
+        let batch_verification = bv.verify(rand::rng());
         assert_eq!(individual_verification.is_ok(), batch_verification.is_ok());
     }
     Ok(())
